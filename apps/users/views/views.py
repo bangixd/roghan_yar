@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import User, OTP
 from users.serializers import SendOTPSerializer, VerifyOTPSerializer
 
+
 class SendOTPView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -26,9 +27,31 @@ class SendOTPView(APIView):
 
 
 class VerifyOTPView(APIView):
+    """
+    تأیید کد یکبارمصرف و بازگشت توکن JWT.
+
+    این view کد OTP ارسال‌شده به شماره موبایل را اعتبارسنجی کرده،
+    کاربر را یافته یا ایجاد می‌کند و access/refresh token برمی‌گرداند.
+
+    Methods:
+        post: دریافت شماره موبایل و کد، احراز هویت و بازگشت توکن.
+    """
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        """
+        پردازش درخواست POST برای تأیید OTP.
+
+        Args:
+            request: درخواست DRF شامل فیلدهای phone_number و code.
+
+        Returns:
+            Response: شامل access_token و refresh_token در صورت موفقیت،
+                      یا پیغام خطا با کد ۴۰۰.
+
+        Raises:
+            ValidationError: اگر شماره یا کد ارسال نشده باشد.
+        """
         serializer = VerifyOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         phone = serializer.validated_data['phone_number']

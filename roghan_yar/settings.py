@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+
+from celery.schedules import crontab
 from decouple import config, Csv
 import sys
 
@@ -81,6 +83,21 @@ CELERY_BROKER_URL = config('REDIS_URL')
 CELERY_RESULT_BACKEND = config('REDIS_URL')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULE = {
+    'birthday-greetings': {
+        'task': 'services.tasks.send_birthday_greetings',
+        'schedule': crontab(hour=8, minute=0),  # هر روز ساعت ۸ صبح
+    },
+    'post-service-survey': {
+        'task': 'services.tasks.send_post_service_survey',
+        'schedule': crontab(hour=9, minute=0),  # هر روز ۹ صبح
+    },
+    'service-reminders': {
+        'task': 'services.tasks.send_service_reminders',
+        'schedule': crontab(hour=10, minute=0),
+    },
+}
 
 TEMPLATES = [
     {
