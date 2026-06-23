@@ -1,12 +1,69 @@
 import random
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework import status, permissions
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import User, OTP
 from users.serializers import SendOTPSerializer, VerifyOTPSerializer
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from users.serializers import UserProfileSerializer, UserSMSConfigSerializer
+from sms.models import UserSMSConfig
+
+
+class ProfileView(generics.RetrieveUpdateAPIView):
+    """
+    نمایش و ویرایش پروفایل کاربر جاری.
+
+    Endpoints:
+        GET  /api/v1/profile/
+        PUT  /api/v1/profile/
+        PATCH /api/v1/profile/
+    """
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+
+class SMSConfigView(APIView):
+    """
+    مدیریت تنظیمات پیامکی کاربر (ایجاد یا بروزرسانی).
+
+    Endpoints:
+        GET   /api/v1/profile/sms-config/
+        PUT   /api/v1/profile/sms-config/
+        PATCH /api/v1/profile/sms-config/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            config = request.user.sms_config
+            serializer = UserSMSConfigSerializer(config)
+            return Response(serializer.data)
+        except UserSMSConfig.DoesNotExist:
+            return Response({'detail': 'تنظیمات پیامکی وجود ندارد'}, status=404)
+
+    def put(self, request):
+        config, created = UserSMSConfig.objects.get_or_create(user=request.user)
+        serializer = UserSMSConfigSerializer(config, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def patch(self, request):
+        try:
+            config = request.user.sms_config
+        except UserSMSConfig.DoesNotExist:
+            return Response({'detail': 'تنظیمات وجود ندارد، از PUT استفاده کنید'}, status=404)
+        serializer = UserSMSConfigSerializer(config, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 
 
 class SendOTPView(APIView):
