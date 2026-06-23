@@ -1,5 +1,5 @@
 from django.db import models
-from django.conf import settings
+from users.models import User
 
 class SMSProvider(models.Model):
     name = models.CharField(max_length=100)
@@ -11,6 +11,7 @@ class SMSProvider(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class SMSTemplate(models.Model):
     """

@@ -1,46 +1,55 @@
-import requests
-from sms.models import SMSProvider, SMSTemplate, SMSLog
+from .models import UserSMSConfig, SMSTemplate, SMSLog
+from .tasks import send_sms_task
 
 
-class BaseSMSBackend:
-    def send(self, phone, message):
-        raise NotImplementedError
+def get_user_sms_config(user):
+    """
+    دریافت تنظیمات پیامکی کاربر، در صورت عدم وجود، خطا برگردان.
+    """
+    try:
+        config = user.sms_config
+        if not config.is_active or not config.api_key:
+            raise ValueError("تنظیمات پیامکی کاربر فعال نیست یا کلید API ندارد")
+        return config
+    except UserSMSConfig.DoesNotExist:
+        raise ValueError("تنظیمات پیامکی برای این کاربر یافت نشد")
 
 
-# مثال برای کاوه‌نگار
-class KavenegarBackend(BaseSMSBackend):
-    def __init__(self, api_key, sender):
-        self.api_key = api_key
-        self.sender = sender
+def send_sms(user, phone, template_code, context=None):
+    """
+    ارسال پیامک از طرف یک کاربر خاص.
 
-    def send(self, phone, message):
-        # اینجا کد واقعی ارسال رو بذار
-        print(f"Simulating sending to {phone}: {message}")
-        return {'status': 'sent'}
+    Args:
+        user: کاربری که پیامک از حساب او فرستاده می‌شود.
+        phone: شماره مقصد.
+        template_code: کد قالب (مثلاً 'welcome').
+        context: دیکشنری مقادیر برای جایگذاری در قالب.
 
-
-def get_active_provider():
-    provider = SMSProvider.objects.filter(is_active=True).first()
-    if not provider:
-        raise Exception("No active SMS provider")
-    # امنیتی: رمزگشایی api_key (اینجا ساده‌انگاری شده)
-    if provider.name == 'Kavenegar':
-        return KavenegarBackend(api_key=provider.api_key_encrypted, sender=provider.sender_number)
-    # اضافه کردن ارائه‌دهنده‌های دیگر...
-    raise Exception("Unsupported provider")
-
-
-def send_sms(phone, template_code, context=None, provider=None):
+    Returns:
+        نتیجهٔ ارسال (غیرهمزمان با Celery).
+    """
     if context is None:
         context = {}
-    try:
-        template = SMSTemplate.objects.get(code=template_code)
-    except SMSTemplate.DoesNotExist:
-        raise Exception(f"Template {template_code} not found")
+    config = get_user_sms_config(user)
+
+    # اولویت با قالب سفارشی کاربر، در غیر این صورت قالب سیستمی
+    template = SMSTemplate.objects.filter(code=template_code, user=user).first()
+    if not template:
+        template = SMSTemplate.objects.filter(code=template_code, user__isnull=True).first()
+    if not template:
+        raise Exception(f"قالب '{template_code}' یافت نشد")
+
     message = template.content
     for key, value in context.items():
         message = message.replace(f"{{{{{key}}}}}", str(value))
 
-    # استفاده از Celery برای ارسال غیرهمزمان
-    from .tasks import send_sms_task
-    send_sms_task.delay(phone, message, provider.id if provider else None, template.id)
+    # ارسال از طریق Celery (با پارامترهای کاربر)
+    send_sms_task.delay(
+        phone=phone,
+        message=message,
+        provider_name=config.provider_name,
+        api_key=config.api_key,
+        sender=config.sender_number,
+        user_id=user.id,
+        template_id=template.id
+    )
