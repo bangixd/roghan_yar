@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
 from decouple import config, Csv
+import sys
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR / 'apps'))
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
