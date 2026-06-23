@@ -18,9 +18,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include(router.urls)),
     path('api/v1/dashboard/', include('dashboard.urls')),
+    path('api/v1/sms/', include('sms.urls')),
     path('api/v1/profile/', ProfileView.as_view(), name='profile'),
     path('api/v1/profile/sms-config/', SMSConfigView.as_view(), name='sms-config'),
     path('api/v1/auth/send-otp/', SendOTPView.as_view(), name='send-otp'),
     path('api/v1/auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
-
 ]

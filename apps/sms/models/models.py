@@ -41,6 +41,7 @@ class SMSTemplate(models.Model):
         owner = f"user {self.user_id}" if self.user else "system"
         return f"{self.code} ({owner})"
 
+
 class SMSLog(models.Model):
     STATUS_CHOICES = (
         ('pending', 'در صف'),
@@ -103,3 +104,65 @@ class UserSMSConfig(models.Model):
 
     def __str__(self):
         return f"SMS config for {self.user.phone_number}"
+
+
+class Campaign(models.Model):
+    """
+    کمپین پیامکی تعریف‌شده توسط یک کاربر.
+
+    Attributes:
+        user: صاحب کمپین.
+        name: نام کمپین.
+        target_type: نوع مخاطب (all, filtered, manual).
+        filters: فیلترهای JSON برای انتخاب مخاطب (در صورت filtered).
+        scheduled_at: زمان ارسال برنامه‌ریزی‌شده؛ اگر خالی باشد یعنی ارسال فوری.
+        template: قالب پیامکی مورد استفاده (اختیاری).
+        message: متن پیامک (در صورت عدم استفاده از قالب).
+        status: وضعیت (draft, scheduled, processing, completed).
+        created_at, updated_at.
+    """
+    class TargetType(models.TextChoices):
+        ALL = 'all', 'همه مشتریان'
+        FILTERED = 'filtered', 'فیلترشده'
+        MANUAL = 'manual', 'دستی'
+
+    class Status(models.TextChoices):
+        DRAFT = 'draft', 'پیش‌نویس'
+        SCHEDULED = 'scheduled', 'زمان‌بندی شده'
+        PROCESSING = 'processing', 'در حال ارسال'
+        COMPLETED = 'completed', 'تکمیل شده'
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='campaigns')
+    name = models.CharField(max_length=200)
+    target_type = models.CharField(max_length=10, choices=TargetType.choices)
+    filters = models.JSONField(default=dict, blank=True)  # e.g. {"car_model": "پراید", "last_service_before": "2024-01-01"}
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    template = models.ForeignKey(SMSTemplate, on_delete=models.SET_NULL, null=True, blank=True)
+    message = models.TextField(blank=True, null=True)  # اگر قالب نباشد
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.DRAFT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class CampaignRecipient(models.Model):
+    """
+    هر رکورد نشان‌دهندهٔ یک مخاطب در یک کمپین.
+
+    Attributes:
+        campaign: کمپین مربوطه.
+        customer: مشتری هدف (در صورت وجود در لیست مشتریان).
+        phone_number: شماره تلفن (برای مخاطبین دستی بدون مشتری).
+        sent: آیا پیامک ارسال شده است؟
+        sent_at: زمان ارسال.
+    """
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='recipients')
+    customer = models.ForeignKey('customers.Customer', on_delete=models.SET_NULL, null=True, blank=True)
+    phone_number = models.CharField(max_length=15)
+    sent = models.BooleanField(default=False)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('campaign', 'phone_number')  # جلوگیری از تکراری

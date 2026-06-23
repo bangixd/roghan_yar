@@ -98,6 +98,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'services.tasks.send_service_reminders',
         'schedule': crontab(hour=10, minute=0),
     },
+    'schedule-campaigns': {
+        'task': 'sms.tasks.process_scheduled_campaigns',
+        'schedule': crontab(minute='*'), 
+    },
 }
 
 TEMPLATES = [
