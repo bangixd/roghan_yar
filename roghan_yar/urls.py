@@ -4,10 +4,13 @@ from rest_framework.routers import DefaultRouter
 from customers.views import CustomerViewSet
 from services.views import ServiceViewSet
 from users.views import SendOTPView, VerifyOTPView
+from tickets.views import TicketViewSet
 
 router = DefaultRouter()
 router.register(r'customers', CustomerViewSet)
 router.register(r'services', ServiceViewSet)
+router.register(r'tickets', TicketViewSet)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
