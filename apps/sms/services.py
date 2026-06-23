@@ -1,5 +1,5 @@
-from .models import UserSMSConfig, SMSTemplate, SMSLog
-from .tasks import send_sms_task
+from sms.models import UserSMSConfig, SMSTemplate, SMSLog
+from sms.tasks import send_sms_task
 
 
 def get_user_sms_config(user):

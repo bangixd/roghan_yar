@@ -1,6 +1,7 @@
 from django.db import models
 from users.models import User
 
+
 class SMSProvider(models.Model):
     name = models.CharField(max_length=100)
     api_key_encrypted = models.TextField()                 # در عمل رمزنگاری کن (با Fernet)
@@ -46,6 +47,12 @@ class SMSLog(models.Model):
         ('sent', 'ارسال شد'),
         ('failed', 'ناموفق'),
         ('delivered', 'تحویل داده شد'),
+    )
+    user = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='sms_logs'
     )
     provider = models.ForeignKey(SMSProvider, on_delete=models.SET_NULL, null=True)
     template = models.ForeignKey(SMSTemplate, on_delete=models.SET_NULL, null=True)
