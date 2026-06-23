@@ -100,7 +100,15 @@ CELERY_BEAT_SCHEDULE = {
     },
     'schedule-campaigns': {
         'task': 'sms.tasks.process_scheduled_campaigns',
-        'schedule': crontab(minute='*'), 
+        'schedule': crontab(minute='*'),
+    },
+    'seasonal-reminder': {
+        'task': 'services.tasks.send_seasonal_reminders',
+        'schedule': crontab(hour=8, minute=0),
+    },
+    'retention-messages': {
+        'task': 'services.tasks.send_retention_messages',
+        'schedule': crontab(hour=9, minute=0),
     },
 }
 

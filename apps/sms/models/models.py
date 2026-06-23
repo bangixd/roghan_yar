@@ -97,6 +97,8 @@ class UserSMSConfig(models.Model):
     reminder_enabled = models.BooleanField(default=True)
     birthday_enabled = models.BooleanField(default=True)
     survey_enabled = models.BooleanField(default=True)
+    seasonal_enabled = models.BooleanField(default=True)
+    retention_enabled = models.BooleanField(default=True)
 
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
