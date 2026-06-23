@@ -25,6 +25,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     Permissions:
         IsAuthenticated, و بررسی مالکیت در سطح object.
     """
+    queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]

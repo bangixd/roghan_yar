@@ -5,11 +5,14 @@ from customers.views import CustomerViewSet
 from services.views import ServiceViewSet
 from users.views import SendOTPView, VerifyOTPView
 from tickets.views import TicketViewSet
+from notifications.views import NotificationViewSet
 
 router = DefaultRouter()
 router.register(r'customers', CustomerViewSet)
 router.register(r'services', ServiceViewSet)
 router.register(r'tickets', TicketViewSet)
+router.register(r'notifications', NotificationViewSet)
+
 
 
 urlpatterns = [
