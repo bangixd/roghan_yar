@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CampaignViewSet, SMSLogViewSet, SMSTemplateViewSet
+from sms.views import CampaignViewSet, SMSLogViewSet, SMSTemplateViewSet
 
 router = DefaultRouter()
 router.register(r'campaigns', CampaignViewSet)

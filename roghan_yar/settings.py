@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Third-party
+    'drf_spectacular',
     'rest_framework',
     'corsheaders',
     'django_celery_beat',
@@ -32,6 +33,7 @@ INSTALLED_APPS = [
     'notifications',
     'sms',
     'dashboard',
+    'feedback',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +63,14 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Roghan Yar API',
+    'DESCRIPTION': 'داشبورد مدیریت تعویض‌روغنی',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 # JWT settings

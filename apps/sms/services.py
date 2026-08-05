@@ -43,13 +43,21 @@ def send_sms(user, phone, template_code, context=None):
     for key, value in context.items():
         message = message.replace(f"{{{{{key}}}}}", str(value))
 
-    # ارسال از طریق Celery (با پارامترهای کاربر)
-    send_sms_task.delay(
-        phone=phone,
-        message=message,
+    # # ارسال از طریق Celery (با پارامترهای کاربر)
+    # send_sms_task.delay(
+    #     phone=phone,
+    #     message=message,
+    #     provider_name=config.provider_name,
+    #     api_key=config.api_key,
+    #     sender=config.sender_number,
+    #     user_id=user.id,
+    #     template_id=template.id
+    # )
+    SMSLog.objects.create(
+        user=user,
         provider_name=config.provider_name,
-        api_key=config.api_key,
-        sender=config.sender_number,
-        user_id=user.id,
-        template_id=template.id
+        template=template,
+        receiver_phone=phone,
+        message=message,
+        status='pending'
     )

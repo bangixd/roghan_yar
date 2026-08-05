@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Campaign, CampaignRecipient, SMSLog, SMSTemplate, UserSMSConfig, SMSProvider
+from sms.models import Campaign, CampaignRecipient, SMSLog, SMSTemplate, UserSMSConfig, SMSProvider
+
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin):
@@ -13,7 +14,7 @@ class CampaignRecipientAdmin(admin.ModelAdmin):
 @admin.register(SMSLog)
 class SMSLogAdmin(admin.ModelAdmin):
     list_display = ['receiver_phone', 'status', 'user', 'created_at']
-    list_filter = ['status', 'provider_name']
+    list_filter = ['status', 'provider']
     search_fields = ['receiver_phone', 'message']
 
 @admin.register(SMSTemplate)

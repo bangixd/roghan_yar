@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Campaign, CampaignRecipient, SMSLog, SMSTemplate, UserSMSConfig
+from sms.models import Campaign, CampaignRecipient, SMSLog, SMSTemplate, UserSMSConfig
 
 class SMSTemplateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,5 +35,5 @@ class CampaignSerializer(serializers.ModelSerializer):
 class SMSLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = SMSLog
-        fields = ['id', 'provider_name', 'receiver_phone', 'message', 'status', 'created_at', 'sent_at']
+        fields = ['id', 'provider', 'receiver_phone', 'message', 'status', 'created_at', 'sent_at']
         read_only_fields = ['id', 'created_at', 'sent_at']

@@ -3,12 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
-from .models import Campaign, CampaignRecipient, SMSLog, SMSTemplate
-from .serializers import (
+from sms.models import Campaign, CampaignRecipient, SMSLog, SMSTemplate
+from sms.serializers import (
     CampaignSerializer, CampaignRecipientSerializer,
     SMSLogSerializer, SMSTemplateSerializer
 )
-from .tasks import process_campaign
+from sms.tasks import process_campaign
+from django.db.models import Q
+
 
 class CampaignViewSet(viewsets.ModelViewSet):
     """
@@ -27,6 +29,7 @@ class CampaignViewSet(viewsets.ModelViewSet):
         POST /api/v1/sms/campaigns/{id}/duplicate/ - کپی کردن کمپین
     """
     serializer_class = CampaignSerializer
+    queryset = Campaign.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'target_type']
@@ -89,9 +92,10 @@ class SMSLogViewSet(viewsets.ReadOnlyModelViewSet):
         GET /api/v1/sms/logs/{id}/  - جزئیات یک لاگ
     """
     serializer_class = SMSLogSerializer
+    queryset = SMSLog.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'provider_name']
+    filterset_fields = ['status', 'provider']
     search_fields = ['receiver_phone', 'message']
     ordering_fields = ['created_at']
     ordering = ['-created_at']
@@ -108,6 +112,7 @@ class SMSTemplateViewSet(viewsets.ReadOnlyModelViewSet):
     کاربران فقط قالب‌های سیستمی و قالب‌های خود را می‌بینند.
     """
     serializer_class = SMSTemplateSerializer
+    queryset = SMSTemplate.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['code', 'content']
@@ -115,5 +120,5 @@ class SMSTemplateViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
         return SMSTemplate.objects.filter(
-            models.Q(user=user) | models.Q(user__isnull=True)
+            Q(user=user) | Q(user__isnull=True)
         )
