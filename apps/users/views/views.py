@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from users.serializers import UserProfileSerializer, UserSMSConfigSerializer
 from sms.models import UserSMSConfig
+from .utils import KavenegarClient
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
@@ -80,6 +81,11 @@ class SendOTPView(APIView):
         OTP.objects.create(phone_number=phone, code=code, expires_at=expires_at)
 
         # اینجا سرویس پیامک رو صدا می‌زنی
+        client = KavenegarClient()
+        message = f'{code}'
+        success, status, message = client.send_sms(phone, message)
+        if not success:
+            raise self.retry(exc=Exception(f"SMS failed: {status}"))
         return Response({'message': 'کد تأیید ارسال شد', 'code': code})  # در پروداکشن code برگردانده نشود
 
 
