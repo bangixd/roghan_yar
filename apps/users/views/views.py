@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from users.serializers import UserProfileSerializer, UserSMSConfigSerializer
 from sms.models import UserSMSConfig
-from .utils import KavenegarClient
+from users.utils import KavenegarClient
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):

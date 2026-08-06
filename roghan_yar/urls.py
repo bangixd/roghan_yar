@@ -30,8 +30,6 @@ urlpatterns = [
     path('api/v1/auth/send-otp/', SendOTPView.as_view(), name='send-otp'),
     path('api/v1/auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
 
-
-
     # OpenAPI schema
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # Swagger UI
