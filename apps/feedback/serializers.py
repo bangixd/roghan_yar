@@ -18,7 +18,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
         model = Feedback
         fields = [
             'id', 'phone_number', 'customer_name', 'customer_phone',
-            'rating', 'comment', 'created_at',
+            'rating', 'comment', 'created_at', 'reply', 'replied_at',
             'service_id', 'service_date', 'service_description'
         ]
 
@@ -26,3 +26,6 @@ class FeedbackSerializer(serializers.ModelSerializer):
         if obj.service:
             return f"سرویس {obj.service.service_date.strftime('%Y-%m-%d')} - {obj.service.items or 'بدون شرح'}"
         return None
+
+class FeedbackReplySerializer(serializers.Serializer):
+    reply = serializers.CharField(required=True, allow_blank=False)

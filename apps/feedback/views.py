@@ -1,9 +1,11 @@
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.response import Response
 from .models import Feedback
-from .serializers import FeedbackSerializer, FeedbackSubmitSerializer
+from .serializers import FeedbackSerializer, FeedbackSubmitSerializer, FeedbackReplySerializer
 from customers.models import Customer
 from services.models import Service
+from rest_framework.decorators import action
+from django.utils import timezone
 
 
 class FeedbackViewSet(viewsets.ModelViewSet):
@@ -104,3 +106,32 @@ class FeedbackViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def reply(self, request, pk=None):
+        """
+        ثبت پاسخ به یک نظر.
+
+        فقط ادمین یا کاربری که مشتری این نظر متعلق به اوست می‌تواند پاسخ دهد.
+        """
+        feedback = self.get_object()
+
+        # بررسی مالکیت
+        if not request.user.is_staff:
+            if not feedback.customer or feedback.customer.created_by != request.user:
+                return Response(
+                    {'error': 'شما اجازه پاسخ به این نظر را ندارید.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+        serializer = FeedbackReplySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        reply_text = serializer.validated_data['reply']
+
+        feedback.reply = reply_text
+        feedback.replied_at = timezone.now()
+        feedback.save(update_fields=['reply', 'replied_at'])
+
+        # برگرداندن کل feedback با پاسخ جدید (با استفاده از سریالایزر نمایش)
+        output_serializer = FeedbackSerializer(feedback, context={'request': request})
+        return Response(output_serializer.data)
