@@ -4,14 +4,24 @@ from sms.models import UserSMSConfig
 
 
 class UserSMSConfigSerializer(serializers.ModelSerializer):
+    """
+    سریالایزر تنظیمات پیامکی کاربر.
+
+    ویژگی‌ها:
+        - فیلد user شماره موبایل کاربر را (از طریق __str__) نمایش می‌دهد و فقط‌خواندنی است.
+        - فیلد api_key فقط در درخواست‌های نوشتن (write_only) قابل ارسال است و در پاسخ‌ها نمایش داده نمی‌شود.
+        - فیلدهای created_at و updated_at نیز فقط‌خواندنی هستند.
+    """
+    user = serializers.StringRelatedField(read_only=True)   # نمایش شماره موبایل کاربر
+
     class Meta:
         model = UserSMSConfig
-        fields = [
-            'provider_name', 'api_key', 'sender_number',
-            'welcome_enabled', 'reminder_enabled', 'birthday_enabled',
-            'survey_enabled', 'is_active'
-        ]
-        extra_kwargs = {'api_key': {'write_only': True}}  # امنیتی
+        fields = '__all__'
+        extra_kwargs = {
+            'api_key': {'write_only': True},       # کلید API هرگز در خروجی نمایش داده نشود
+            'created_at': {'read_only': True},
+            'updated_at': {'read_only': True},
+        }
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
