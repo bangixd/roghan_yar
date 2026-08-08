@@ -33,8 +33,9 @@ def send_post_service_survey():
             {
                 'name': service.customer.full_name,
                 'service_date': service.service_date.strftime('%Y-%m-%d'),
-                'survey_link': 'https://example.com/survey/123'  # می‌تونه از تنظیمات بیاد
-            }
+                'survey_link': 'https://example.com/survey/123',  # می‌تونه از تنظیمات بیاد
+                'service_id': service.id
+        }
         )
         service.survey_sent = True
         service.save(update_fields=['survey_sent'])

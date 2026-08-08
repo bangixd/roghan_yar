@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from .models import Feedback
 from .serializers import FeedbackSerializer, FeedbackSubmitSerializer
 from customers.models import Customer
+from services.models import Service
 
 
 class FeedbackViewSet(viewsets.ModelViewSet):
@@ -60,15 +61,26 @@ class FeedbackViewSet(viewsets.ModelViewSet):
         phone = serializer.validated_data['phone_number']
         rating = serializer.validated_data['rating']
         comment = serializer.validated_data.get('comment', '')
+        service_id = serializer.validated_data.get('service_id')  # دریافت شناسه سرویس
 
         # اتصال به مشتری در صورت وجود
         customer = Customer.objects.filter(phone_number=phone).first()
+
+        # یافتن سرویس در صورت ارسال service_id
+        service = None
+        if service_id:
+            try:
+                service = Service.objects.get(id=service_id)
+            except Service.DoesNotExist:
+                pass  # در صورت نامعتبر بودن، نادیده می‌گیریم
 
         feedback = Feedback.objects.create(
             phone_number=phone,
             rating=rating,
             comment=comment,
-            customer=customer
+            customer=customer,
+            service=service      # اتصال به سرویس
+
         )
 
         return Response(
