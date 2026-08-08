@@ -1,1 +1,1 @@
-from .views import CampaignViewSet, SMSLogViewSet, SMSTemplateViewSet
+from .views import *

@@ -1,15 +1,16 @@
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.utils import timezone
 from sms.models import Campaign, CampaignRecipient, SMSLog, SMSTemplate
 from sms.serializers import (
     CampaignSerializer, CampaignRecipientSerializer,
-    SMSLogSerializer, SMSTemplateSerializer
+    SMSLogSerializer, SMSTemplateSerializer, BulkSMSRequestSerializer
 )
-from sms.tasks import process_campaign
+from sms.tasks import process_campaign, send_sms_task
 from django.db.models import Q
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from sms.services import get_user_sms_config
 
 
 class CampaignViewSet(viewsets.ModelViewSet):
@@ -121,4 +122,53 @@ class SMSTemplateViewSet(viewsets.ReadOnlyModelViewSet):
         user = self.request.user
         return SMSTemplate.objects.filter(
             Q(user=user) | Q(user__isnull=True)
+        )
+
+class BulkSMSView(APIView):
+    """
+    ارسال پیامک انبوه به لیستی از شماره‌ها.
+
+    Endpoint:
+        POST /api/v1/sms/bulk-send/
+
+    Body:
+        {
+            "phones": ["09121234567", "09131234567"],
+            "message": "متن پیامک"
+        }
+
+    Permission:
+        IsAuthenticated
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = BulkSMSRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phones = serializer.validated_data['phones']
+        message = serializer.validated_data['message']
+        user = request.user
+
+        # دریافت تنظیمات پیامکی کاربر
+        try:
+            config = get_user_sms_config(user)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ایجاد تسک Celery برای هر شماره
+        for phone in phones:
+            send_sms_task.delay(
+                phone=phone,
+                message=message,
+                provider_name=config.provider_name,
+                api_key=config.api_key,
+                sender=config.sender_number,
+                user_id=user.id,
+                template_id=None
+            )
+
+        return Response(
+            {'message': f'پیامک برای {len(phones)} شماره در صف ارسال قرار گرفت.'},
+            status=status.HTTP_200_OK
         )

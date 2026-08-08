@@ -37,3 +37,11 @@ class SMSLogSerializer(serializers.ModelSerializer):
         model = SMSLog
         fields = ['id', 'provider', 'receiver_phone', 'message', 'status', 'created_at', 'sent_at']
         read_only_fields = ['id', 'created_at', 'sent_at']
+
+class BulkSMSRequestSerializer(serializers.Serializer):
+    phones = serializers.ListField(
+        child=serializers.CharField(max_length=15),
+        allow_empty=False,
+        help_text="لیست شماره تلفن‌های مقصد"
+    )
+    message = serializers.CharField(help_text="متن پیامک")
