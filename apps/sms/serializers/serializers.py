@@ -39,9 +39,25 @@ class SMSLogSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'sent_at']
 
 class BulkSMSRequestSerializer(serializers.Serializer):
+    TARGET_CHOICES = [
+        ('all', 'همه مشتریان'),
+        ('filtered', 'مشتریان فیلترشده'),
+        ('manual', 'مخاطبان دستی'),
+    ]
+
+    target_type = serializers.ChoiceField(choices=TARGET_CHOICES)
+    message = serializers.CharField(help_text="متن پیامک")
+    filters = serializers.JSONField(required=False, default=dict,
+                                    help_text="فیلترهای مشتریان (در صورت انتخاب filtered)")
     phones = serializers.ListField(
         child=serializers.CharField(max_length=15),
-        allow_empty=False,
-        help_text="لیست شماره تلفن‌های مقصد"
+        required=False, allow_empty=True,
+        help_text="لیست شماره‌ها برای حالت manual"
     )
-    message = serializers.CharField(help_text="متن پیامک")
+
+    def validate(self, data):
+        if data['target_type'] == 'manual' and not data.get('phones'):
+            raise serializers.ValidationError("برای ارسال دستی، لیست شماره‌ها (phones) الزامی است.")
+        if data['target_type'] == 'filtered' and not data.get('filters'):
+            raise serializers.ValidationError("برای ارسال فیلترشده، فیلترها (filters) الزامی است.")
+        return data

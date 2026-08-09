@@ -7,10 +7,13 @@ from sms.serializers import (
     SMSLogSerializer, SMSTemplateSerializer, BulkSMSRequestSerializer
 )
 from sms.tasks import process_campaign, send_sms_task
-from django.db.models import Q
+from django.db.models import Q, Max
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from sms.services import get_user_sms_config
+from services.models import Service
+from customers.models import Customer
+
 
 
 class CampaignViewSet(viewsets.ModelViewSet):
@@ -126,15 +129,17 @@ class SMSTemplateViewSet(viewsets.ReadOnlyModelViewSet):
 
 class BulkSMSView(APIView):
     """
-    ارسال پیامک انبوه به لیستی از شماره‌ها.
+    ارسال پیامک انبوه به گروهی از مخاطبان (همه، فیلترشده یا دستی).
 
     Endpoint:
         POST /api/v1/sms/bulk-send/
 
-    Body:
+    Body نمونه:
         {
-            "phones": ["09121234567", "09131234567"],
-            "message": "متن پیامک"
+            "target_type": "all",          // "all", "filtered", "manual"
+            "message": "تخفیف ویژه امروز",
+            "filters": {"car_model": "پژو 206"},   // فقط در حالت filtered
+            "phones": ["0912..."]                  // فقط در حالت manual
         }
 
     Permission:
@@ -146,17 +151,41 @@ class BulkSMSView(APIView):
         serializer = BulkSMSRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        phones = serializer.validated_data['phones']
+        target_type = serializer.validated_data['target_type']
         message = serializer.validated_data['message']
+        filters = serializer.validated_data.get('filters', {})
+        manual_phones = serializer.validated_data.get('phones', [])
         user = request.user
 
-        # دریافت تنظیمات پیامکی کاربر
+        # بررسی تنظیمات پیامکی کاربر
         try:
             config = get_user_sms_config(user)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ایجاد تسک Celery برای هر شماره
+        # ساخت لیست نهایی شماره‌ها بر اساس target_type
+        if target_type == 'all':
+            phones = list(Customer.objects.filter(created_by=user).values_list('phone_number', flat=True))
+        elif target_type == 'filtered':
+            qs = Customer.objects.filter(created_by=user)
+            if 'car_model' in filters:
+                qs = qs.filter(car_model__icontains=filters['car_model'])
+            if 'last_service_before' in filters:
+                from datetime import datetime
+                date_limit = datetime.strptime(filters['last_service_before'], '%Y-%m-%d').date()
+                # مشتریانی که آخرین سرویس‌شان قبل از این تاریخ است
+                customer_ids = Service.objects.filter(
+                    customer__created_by=user
+                ).values('customer').annotate(last=Max('service_date')).filter(last__lt=date_limit).values('customer')
+                qs = qs.filter(id__in=customer_ids)
+            phones = list(qs.values_list('phone_number', flat=True))
+        else:  # manual
+            phones = manual_phones
+
+        if not phones:
+            return Response({'error': 'هیچ شماره‌ای برای ارسال یافت نشد.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ارسال پیامک برای هر شماره
         for phone in phones:
             send_sms_task.delay(
                 phone=phone,
