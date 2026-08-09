@@ -2,6 +2,8 @@ from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from customers.models import Customer
 from customers.serializers import CustomerSerializer
+from notifications.services import create_notification
+
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -53,4 +55,10 @@ class CustomerViewSet(viewsets.ModelViewSet):
         Returns:
             None
         """
+        customer = serializer.save(created_by=self.request.user)
+        create_notification(
+            user=self.request.user,
+            title="مشتری جدید",
+            body=f"مشتری {customer.full_name} با شماره {customer.phone_number} با موفقیت ثبت شد."
+        )
         serializer.save(created_by=self.request.user)

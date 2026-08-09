@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from services.models import Service
 from services.serializers import ServiceSerializer
+from notifications.services import create_notification
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
@@ -54,4 +55,10 @@ class ServiceViewSet(viewsets.ModelViewSet):
         Returns:
             None
         """
+        service = serializer.save(performed_by=self.request.user)
+        create_notification(
+            user=self.request.user,
+            title="سرویس جدید ثبت شد",
+            body=f"سرویس برای {service.customer.full_name} در تاریخ {service.service_date.strftime('%Y-%m-%d')} ثبت گردید."
+        )
         serializer.save(performed_by=self.request.user)

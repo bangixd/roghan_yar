@@ -6,6 +6,8 @@ from customers.models import Customer
 from services.models import Service
 from rest_framework.decorators import action
 from django.utils import timezone
+from notifications.services import create_notification
+
 
 
 class FeedbackViewSet(viewsets.ModelViewSet):
@@ -84,6 +86,12 @@ class FeedbackViewSet(viewsets.ModelViewSet):
             service=service      # اتصال به سرویس
 
         )
+        if feedback.customer and feedback.customer.created_by:
+            create_notification(
+                user=feedback.customer.created_by,
+                title="نظر جدید",
+                body=f"مشتری {feedback.customer.full_name} به سرویس امتیاز {feedback.rating} داد."
+            )
 
         return Response(
             {
@@ -132,6 +140,11 @@ class FeedbackViewSet(viewsets.ModelViewSet):
         feedback.replied_at = timezone.now()
         feedback.save(update_fields=['reply', 'replied_at'])
 
+        create_notification(
+            user=request.user,
+            title="پاسخ ثبت شد",
+            body=f"پاسخ شما به نظر مشتری {feedback.customer.full_name} با موفقیت ثبت گردید."
+        )
         # برگرداندن کل feedback با پاسخ جدید (با استفاده از سریالایزر نمایش)
         output_serializer = FeedbackSerializer(feedback, context={'request': request})
         return Response(output_serializer.data)
