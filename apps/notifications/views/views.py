@@ -35,6 +35,12 @@ class NotificationViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'body']
     queryset = Notification.objects.all()
 
+    def perform_create(self, serializer):
+        """
+        هنگام ایجاد نوتیفیکیشن، کاربر جاری را به‌عنوان صاحب نوتیفیکیشن تنظیم کن.
+        """
+        serializer.save(user=self.request.user)
+
     def get_queryset(self):
         """
         فقط اعلان‌های کاربر احراز هویت‌شده را برگردان.
