@@ -6,13 +6,15 @@ from sms.serializers import (
     CampaignSerializer, CampaignRecipientSerializer,
     SMSLogSerializer, SMSTemplateSerializer, BulkSMSRequestSerializer
 )
-from sms.tasks import process_campaign, send_sms_task
 from django.db.models import Q, Max
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from sms.services import get_user_sms_config
 from services.models import Service
 from customers.models import Customer
+from sms.services import send_sms, get_user_sms_config, send_plain_sms
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -187,15 +189,7 @@ class BulkSMSView(APIView):
 
         # ارسال پیامک برای هر شماره
         for phone in phones:
-            send_sms_task.delay(
-                phone=phone,
-                message=message,
-                provider_name=config.provider_name,
-                api_key=config.api_key,
-                sender=config.sender_number,
-                user_id=user.id,
-                template_id=None
-            )
+            send_plain_sms(user, phone, message)
 
         return Response(
             {'message': f'پیامک برای {len(phones)} شماره در صف ارسال قرار گرفت.'},

@@ -1,7 +1,5 @@
 import os
 from pathlib import Path
-
-from celery.schedules import crontab
 from decouple import config, Csv
 import sys
 
@@ -24,7 +22,6 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'rest_framework',
     'corsheaders',
-    'django_celery_beat',
     # Local apps
     'users',
     'customers',
@@ -101,37 +98,37 @@ DATABASES = {
 # }
 
 # Celery
-CELERY_BROKER_URL = config('REDIS_URL')
-CELERY_RESULT_BACKEND = config('REDIS_URL')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-
-CELERY_BEAT_SCHEDULE = {
-    'birthday-greetings': {
-        'task': 'services.tasks.send_birthday_greetings',
-        'schedule': crontab(hour=8, minute=0),  # هر روز ساعت ۸ صبح
-    },
-    'post-service-survey': {
-        'task': 'services.tasks.send_post_service_survey',
-        'schedule': crontab(hour=9, minute=0),  # هر روز ۹ صبح
-    },
-    'service-reminders': {
-        'task': 'services.tasks.send_service_reminders',
-        'schedule': crontab(hour=10, minute=0),
-    },
-    'schedule-campaigns': {
-        'task': 'sms.tasks.process_scheduled_campaigns',
-        'schedule': crontab(minute='*'),
-    },
-    'seasonal-reminder': {
-        'task': 'services.tasks.send_seasonal_reminders',
-        'schedule': crontab(hour=8, minute=0),
-    },
-    'retention-messages': {
-        'task': 'services.tasks.send_retention_messages',
-        'schedule': crontab(hour=9, minute=0),
-    },
-}
+# CELERY_BROKER_URL = config('REDIS_URL')
+# CELERY_RESULT_BACKEND = config('REDIS_URL')
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+#
+# CELERY_BEAT_SCHEDULE = {
+#     'birthday-greetings': {
+#         'task': 'services.tasks.send_birthday_greetings',
+#         'schedule': crontab(hour=8, minute=0),  # هر روز ساعت ۸ صبح
+#     },
+#     'post-service-survey': {
+#         'task': 'services.tasks.send_post_service_survey',
+#         'schedule': crontab(hour=9, minute=0),  # هر روز ۹ صبح
+#     },
+#     'service-reminders': {
+#         'task': 'services.tasks.send_service_reminders',
+#         'schedule': crontab(hour=10, minute=0),
+#     },
+#     'schedule-campaigns': {
+#         'task': 'sms.tasks.process_scheduled_campaigns',
+#         'schedule': crontab(minute='*'),
+#     },
+#     'seasonal-reminder': {
+#         'task': 'services.tasks.send_seasonal_reminders',
+#         'schedule': crontab(hour=8, minute=0),
+#     },
+#     'retention-messages': {
+#         'task': 'services.tasks.send_retention_messages',
+#         'schedule': crontab(hour=9, minute=0),
+#     },
+# }
 
 TEMPLATES = [
     {
@@ -176,3 +173,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+DEFAULT_SMS_PROVIDER = config('DEFAULT_SMS_PROVIDER', default='kavenegar')
+DEFAULT_SMS_API_KEY = config('DEFAULT_SMS_API_KEY', default='')
+DEFAULT_SMS_SENDER = config('DEFAULT_SMS_SENDER', default='')

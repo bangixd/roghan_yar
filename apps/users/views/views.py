@@ -11,6 +11,7 @@ from users.serializers import UserProfileSerializer, UserSMSConfigSerializer
 from sms.models import UserSMSConfig
 from users.utils import KavenegarClient
 from django.conf import settings
+from sms.services import send_otp_sms
 import logging
 
 logger = logging.getLogger(__name__)
@@ -88,17 +89,13 @@ class SendOTPView(APIView):
         client = KavenegarClient()
         message = f'{code}'
         try:
-            success, status, message = client.send_sms(phone, message)
+            send_otp_sms(phone, code)
         except Exception as e:
-            logger.error(f"ارسال OTP به {phone} ناموفق بود: {e}")
-            # در محیط توسعه، کد را در پاسخ برگردان (اختیاری)
+            logger.error(f"OTP SMS failed: {e}")
             if settings.DEBUG:
                 return Response({'message': 'کد تأیید (توسعه)', 'code': code})
-            return Response(
-                {'error': 'خطا در ارسال پیامک. لطفاً دوباره تلاش کنید.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        return Response({'message': 'کد تأیید ارسال شد', 'code': code})  # در پروداکشن code برگردانده نشود
+            return Response({'error': 'خطا در ارسال پیامک'}, status=500)
+        return Response({'message': 'کد تأیید ارسال شد.'})
 
 
 class VerifyOTPView(APIView):
