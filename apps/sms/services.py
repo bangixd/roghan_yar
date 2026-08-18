@@ -1,5 +1,5 @@
 from sms.models import UserSMSConfig, SMSTemplate, SMSLog
-from sms.backends import KavenegarBackend, MeliPayamakBackend
+from sms.backends import ParsGreenBackend
 from django.conf import settings
 
 
@@ -25,10 +25,10 @@ def get_default_backend():
     if not provider_name or not api_key:
         raise ValueError("تنظیمات پیامکی پیش‌فرض (DEFAULT_SMS_PROVIDER, DEFAULT_SMS_API_KEY) کامل نیست.")
 
-    if provider_name == 'kavenegar':
-        return KavenegarBackend(api_key=api_key, sender=sender)
-    elif provider_name == 'melipayamak':
-        return MeliPayamakBackend(api_key=api_key, sender=sender)
+    if provider_name == 'parsgreen':
+        return ParsGreenBackend(api_key=api_key, sender=sender)
+    # اگر پروایدرهای دیگری هم دارید، اینجا اضافه کنید
+    # elif provider_name == 'kavenegar': ...
     else:
         raise ValueError(f"پروایدر پیش‌فرض '{provider_name}' پشتیبانی نمی‌شود.")
 

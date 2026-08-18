@@ -175,6 +175,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-DEFAULT_SMS_PROVIDER = config('DEFAULT_SMS_PROVIDER', default='kavenegar')
+DEFAULT_SMS_PROVIDER = config('DEFAULT_SMS_PROVIDER', default='parsgreen')
 DEFAULT_SMS_API_KEY = config('DEFAULT_SMS_API_KEY', default='')
 DEFAULT_SMS_SENDER = config('DEFAULT_SMS_SENDER', default='')

@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from sms.models import SMSLog
 from sms.services import get_user_sms_config
-from sms.backends import KavenegarBackend, MeliPayamakBackend  # مسیر صحیح بک‌اندها
+from sms.backends import ParsGreenBackend  # مسیر صحیح بک‌اندها
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +21,8 @@ class Command(BaseCommand):
                     continue
 
                 config = log.user.sms_config
-                if config.provider_name == 'kavenegar':
-                    backend = KavenegarBackend(config.api_key, config.sender_number)
-                elif config.provider_name == 'melipayamak':
-                    backend = MeliPayamakBackend(config.api_key, config.sender_number)
+                if config.provider_name == 'parsgreen':
+                    backend = ParsGreenBackend(config.api_key, config.sender_number)
                 else:
                     raise ValueError(f"پروایدر نامعتبر: {config.provider_name}")
 

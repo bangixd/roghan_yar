@@ -88,7 +88,7 @@ class UserSMSConfig(models.Model):
         is_active: فعال بودن کلی سرویس پیامک برای این کاربر.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='sms_config')
-    provider_name = models.CharField(max_length=50, default='kavenegar')
+    provider_name = models.CharField(max_length=50, default='parsgreen')
     api_key = models.TextField(blank=True, null=True)  # در عمل رمزنگاری شود
     sender_number = models.CharField(max_length=20, blank=True, null=True)
 
